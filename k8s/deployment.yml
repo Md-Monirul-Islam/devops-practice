@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notes-app-deployment
+  labels:
+    app: notes-app
+  namespace: notes-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notes-app
+  template:
+    metadata:
+      labels:
+        app: notes-app
+    spec:
+      containers:
+        - name: notes-app
+          image: munnacse/notes-app-k8s
+          ports:
+            - containerPort: 8000
+          # Ensure the container runs a long-lived process (Django dev server)
+          # Quick fix: run the built-in Django runserver and bind to 0.0.0.0:8000
+          # In production you should use gunicorn/uvicorn and proper startup script.
+          command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
