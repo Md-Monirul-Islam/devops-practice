@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nginx-cronjob
+  namespace: nginx
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: nginx
+            component: cronjob
+        spec:
+          containers:
+          - name: cronjob-container
+            image: busybox
+            command:
+              - sh
+              - -c
+              - |
+                  echo "Hello from the Kubernetes CronJob!"
+                  mkdir -p /backups /demo-data
+                  # only copy if /demo-data is non-empty to avoid cp errors
+                  if [ -n "$(ls -A /demo-data 2>/dev/null)" ]; then
+                    cp -r /demo-data/* /backups/
+                  else
+                    echo "No demo-data to back up"
+                  fi
+                  echo "Backup completed at $(date)" >> /backups/backup.log
+            volumeMounts:
+              - name: backup-volume
+                mountPath: /backups
+              - name: demo-data-volume
+                mountPath: /demo-data
+          volumes:
+            - name: backup-volume
+              emptyDir: {}
+            - name: demo-data-volume
+              emptyDir: {}
+          restartPolicy: OnFailure
